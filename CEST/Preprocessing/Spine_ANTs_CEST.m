@@ -68,27 +68,27 @@ function Spine_ANTs_CEST(ScanNumber,Ref,B1,MFA,WASSR,CEST,MT_UpSample,varargin)
 %% Prep Volumes for Registration by Saving them out to NIFTI
 MFA_detrend = [1.8287    1.6001    1.2828    1.1001    1.0000 1.1725];
 PrepTime = tic;
-
-if MT_UpSample
-    
-    Reg_Prep_vu_B1nii(Ref,Ref,ScanNumber,'mFFE',ImagePath);
-    Reg_Prep_vu_B1nii(B1,Ref,ScanNumber,'B1',ImagePath);
-    Reg_Prep_vu_B1nii(MFA,Ref,ScanNumber,'MFA',ImagePath,[],MFA_detrend);
-    Reg_Prep_vu_B1nii(WASSR,Ref,ScanNumber,'WASSR',ImagePath);
-    Reg_Prep_vu_B1nii(CEST,Ref,ScanNumber,'CEST',ImagePath);
-else
-    
-    %     MT_info = loadPARREC(sprintf('%s/%s',ImagePath,MT));
-    %     f= MT_info.imgdef.recon_resolution_x_y.uniq;
-    resx = 256;%f(1);
-    resy = 256;%f(2);
-    
-    Reg_Prep_vu_B1nii(Ref,Ref,ScanNumber,'mFFE',ImagePath,[resx, resy]);
-    Reg_Prep_vu_B1nii(B1,Ref,ScanNumber,'B1',ImagePath);
-    Reg_Prep_vu_B1nii(MFA,Ref,ScanNumber,'MFA',ImagePath,[],MFA_detrend);
-    Reg_Prep_vu_B1nii(WASSR,Ref,ScanNumber,'WASSR',ImagePath,[resx, resy]);
-    Reg_Prep_vu_B1nii(CEST,Ref,ScanNumber,'CEST',ImagePath,[resx, resy]);
-end
+% 
+% if MT_UpSample
+%     
+%     Reg_Prep_vu_B1nii(Ref,Ref,ScanNumber,'mFFE',ImagePath);
+%     Reg_Prep_vu_B1nii(B1,Ref,ScanNumber,'B1',ImagePath);
+%     Reg_Prep_vu_B1nii(MFA,Ref,ScanNumber,'MFA',ImagePath,[],MFA_detrend);
+%     Reg_Prep_vu_B1nii(WASSR,Ref,ScanNumber,'WASSR',ImagePath);
+%     Reg_Prep_vu_B1nii(CEST,Ref,ScanNumber,'CEST',ImagePath);
+% else
+%     
+%     %     MT_info = loadPARREC(sprintf('%s/%s',ImagePath,MT));
+%     %     f= MT_info.imgdef.recon_resolution_x_y.uniq;
+%     resx = 256;%f(1);
+%     resy = 256;%f(2);
+%     
+%     Reg_Prep_vu_B1nii(Ref,Ref,ScanNumber,'mFFE',ImagePath,[resx, resy]);
+%     Reg_Prep_vu_B1nii(B1,Ref,ScanNumber,'B1',ImagePath);
+%     Reg_Prep_vu_B1nii(MFA,Ref,ScanNumber,'MFA',ImagePath,[],MFA_detrend);
+%     Reg_Prep_vu_B1nii(WASSR,Ref,ScanNumber,'WASSR',ImagePath,[resx, resy]);
+%     Reg_Prep_vu_B1nii(CEST,Ref,ScanNumber,'CEST',ImagePath,[resx, resy]);
+% end
 
 
 fprintf('\nTime to Perform Registration Prep is: %3.4f minutes \n', toc(PrepTime)/60);

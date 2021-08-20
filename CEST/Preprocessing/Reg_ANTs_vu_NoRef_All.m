@@ -1,4 +1,4 @@
-function Reg_ANTs_home_NoRef(scanID,ImageType)
+function Reg_ANTs_vu_NoRef_All(scanID,ImageType)
 %
 % Assumes FSL and ANTS are installed on computer.
 % For FSL, see: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/
@@ -9,32 +9,22 @@ fprintf('\n--------------------------------------- \n');
 fprintf('Beginning Registration of %s to MT. \n',ImageType);
 fprintf('--------------------------------------- \n');
 
-% Check if loadPARREC exists
-if isempty(which('loadPARREC'))
-    error('loadPARREC not in path, add function to path and rerun');
+setenv('FSLOUTPUTTYPE','NIFTI_GZ')
+Path = getenv('PATH');
+if ~contains(Path,'/usr/local/fsl/bin')
+    setenv('PATH', [Path ':/usr/local/fsl/bin']);
 end
 
-% Corrects PATH so fsl can be called without listing full path every time
-Path = getenv('PATH');
-if ~contains(Path,'/Users/lawlesrd/Documents/fsl/bin')
-    setenv('PATH', [Path ':/Users/lawlesrd/Documents/fsl/bin']);  %Edit rdl 4/19/2018 getenv was just PATH
-      %setenv('PATH', [Path ':/usr/local/fsl/bin']);  %home version
+if ~contains(Path,'/opt/ants/bin/')
+    setenv('PATH', [Path ':/opt/ants/bin/']);
 end
 clear PATH
-
-Path = getenv('PATH');
-if ~contains(Path,'/Users/lawlesrd/install/bin/')
-    %setenv('PATH', [Path ':/Users/lawlesrd/Documents/fsl/bin']);  %Edit rdl 4/19/2018 getenv was just PATH
-      setenv('PATH', [Path ':/Users/lawlesrd/install/bin/']);  %home version
-end
-clear PATH
-
 % Check if scanID is a character
 if ~ischar(scanID)
     scanID = num2str(scanID);
 end
 
-num_dyn = length(dir(sprintf('%s_Registration/%s_Prereg/%s_MT_G*',scanID,scanID,scanID)));
+num_dyn = length(dir(sprintf('%s_Registration/%s_Prereg/%s_%s_G*',scanID,scanID,scanID,ImageType)));
 
 temp_folder='ANTs_Reg';
 
@@ -56,7 +46,12 @@ elseif strcmpi(ImageType,'MFA') || strcmpi(ImageType,'T115') || strcmpi(ImageTyp
     
 elseif strcmpi(ImageType,'CEST') || strcmpi(ImageType,'WASSR')
         im_reg_CEST(scanID,ImageType,num_dyn,temp_folder);
-        
+            fslm_in = [];
+    for volume = 1:num_dyn
+        fslm_in = sprintf('%s %s',fslm_in,sprintf('%s/imv%itoref.nii.gz',temp_folder,volume));
+    end
+    
+    unix(sprintf('fslmerge -t %s_Registration/%s_%s_Reg %s',scanID,scanID,ImageType,fslm_in));
 else
     if strcmpi(ImageType,'MT') ||  strcmpi(ImageType,'mFFE') || strcmpi(ImageType,'ihMT')
         im_reg_MT(scanID,ImageType,num_dyn,temp_folder);
@@ -436,7 +431,9 @@ fprintf('\nProcessing for %s \n', ImageType);
 % Find Transform to Register B1 to the MT
 in_vol = sprintf('%s_Registration/%s_Prereg/%s_B1_Gvol_1.nii.gz',scanID,scanID,scanID);
 trans_mat = sprintf('%s/%s_B1_to_MT.mat',temp_folder,scanID);
-target_vol = sprintf('%s_Registration/%s_Prereg/%s_MT_Gvol_1.nii.gz',scanID,scanID,scanID);
+
+%if exist(sprintf('%s_Registration/%s_Prereg/%s_MT_Gvol_1.nii.gz',scanID,scanID,scanID)
+    target_vol = sprintf('%s_Registration/%s_Prereg/%s_MT_Gvol_1.nii.gz',scanID,scanID,scanID);
 
 input_trans = sprintf(['flirt -2D -searchry 0 0 -searchrx 0 0 '...
     '-searchrz -10 10 -interp spline -searchcost normcorr -datatype float'...
@@ -444,6 +441,7 @@ input_trans = sprintf(['flirt -2D -searchry 0 0 -searchrx 0 0 '...
 
 disp(['Find B1 Reg Trans Mat for: ' in_vol ' to ' target_vol])
 unix(input_trans);
+
 
 % Apply the Tranform Matrix to the B1 Map
 in_vol = sprintf('%s_Registration/%s_Prereg/%s_B1_vol_2.nii.gz',scanID,scanID,scanID);
@@ -484,7 +482,7 @@ disp(['Register B1 Data for: ' in_vol ' to ' target_vol])
 unix(input_trans);
 
 end
-%% Function for MT weighted Images
+%% Function for CEST weighted Images
 function im_reg_CEST(scanID,ImageType,num_dyn,temp_folder)
 
     % Save niftis of MFA, mFFE mean of slices 6:9
@@ -498,29 +496,43 @@ function im_reg_CEST(scanID,ImageType,num_dyn,temp_folder)
     
     %% Load in offset list to determine S0 images and make mean S0 for target
     
-    if strcmpi(ImageType,'CEST')
+  %  if strcmpi(ImageType,'CEST')
         if num_dyn == 37
-            rf_A=load('/Users/lawlesrd/Desktop/Research/Research Code/CEST/Post Processing/multipleS0_reduced.txt');
+            rf_A=load('/Users/dylanlawless/Desktop/qMT/DataProcessingCode/git/CEST/multipleS0_reduced.txt');
         else
-            rf_A=load('/Users/lawlesrd/Desktop/Research/Research Code/CEST/Post Processing/multipleS0.txt');
+            rf_A=load('/Users/dylanlawless/Desktop/qMT/DataProcessingCode/git/CEST/multipleS0.txt');
         end
-    else
-        if num_dyn == 15
-            rf_A=load('/Users/lawlesrd/Desktop/Research/Research Code/CEST/Post Processing/Shortened_WASSR.txt');
-        else
-            rf_A=load('/Users/lawlesrd/Desktop/Research/Research Code/CEST/Post Processing/WASSR.txt');
+%
+    %end
+    S0 = sprintf('%s_Registration/%s_Prereg/%s_CEST_S0vol.nii.gz',scanID,scanID,scanID);
+    S0G = sprintf('%s_Registration/%s_Prereg/%s_CEST_S0Gvol.nii.gz',scanID,scanID,scanID);
+    
+    if isempty(dir(S0))
+        S0ind = find(rf_A == 100000);
+        
+        for vol = 1:length(S0ind)
+            if vol == 1
+                S0info = niftiinfo(sprintf('%s_Registration/%s_Prereg/%s_CEST_Gvol_%i.nii.gz',scanID,scanID,scanID,S0ind(vol)));
+            end
+            S0Gvol(:,:,:,vol) = niftiread(sprintf('%s_Registration/%s_Prereg/%s_CEST_Gvol_%i.nii.gz',scanID,scanID,scanID,S0ind(vol)));
+            S0vol(:,:,:,vol) = niftiread(sprintf('%s_Registration/%s_Prereg/%s_CEST_vol_%i.nii.gz',scanID,scanID,scanID,S0ind(vol)));
         end
+        
+        S0mean = mean(S0vol,4);
+        S0Gmean = mean(S0Gvol,4);
+        
+        S0 = sprintf('%s_Registration/%s_Prereg/%s_CEST_S0vol.nii',scanID,scanID,scanID);
+        S0G = sprintf('%s_Registration/%s_Prereg/%s_CEST_S0Gvol.nii',scanID,scanID,scanID);
+    
+        
+        niftiwrite(S0mean,S0,S0info);
+        niftiwrite(S0Gmean,S0G,S0info);
+        
+        unix(['gzip ' S0]);
+        unix(['gzip ' S0G]);
+        S0 = [S0 '.gz'];
+        S0G = [S0G '.gz'];
     end
-    
-    S0ind = find(rf_A == 100000);
-    
-    for vol = 1:length(S0ind)
-    
-        S0vol(:,:,:,vol) = niftiread(sprintf('%s_%s_Gvol_%i.nii.gz',scanID,ImageType,S0ind(i)));
-        
-        
-    end 
-    
     
 for volume=1:num_dyn
     
@@ -528,11 +540,11 @@ for volume=1:num_dyn
     
     % Break Reference (mFFE) into individual slices
     if volume == 1
-        unix(sprintf('fslsplit %s_Registration/%s_Prereg/%s_MT_vol_1.nii.gz %s/ref_ -z',...
-            scanID,scanID,scanID,temp_folder));
+        unix(sprintf('fslsplit %s %s/ref_ -z',...
+            S0,temp_folder));
         
-        unix(sprintf('fslsplit %s_Registration/%s_Prereg/%s_MT_Gvol_1.nii.gz %s/ref_G_ -z',...
-            scanID,scanID,scanID,temp_folder));
+        unix(sprintf('fslsplit %s %s/ref_G_ -z',...
+            S0G,temp_folder));
     end
     
     % Break Image into individual slices

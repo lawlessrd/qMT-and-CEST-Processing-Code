@@ -17,12 +17,19 @@ if ~contains(Path,'/Users/lawlesrd/install/bin/')
 end
 clear PATH
 
+% SCT
+if ~contains(Path,'/Users/dylanlawless/sct_5.3.0/bin')
+    setenv('PATH', [Path ':/Users/dylanlawless/sct_5.3.0/bin']);  %Edit rdl 4/19/2018 getenv was just PATH
+      %setenv('PATH', [Path ':/opt/ants/bin/']);  %home version
+end
+clear PATH
+
 %% Test for differences in MFA when registered to MT vs itself
 
 tic;
 home=pwd;
 out = regexp(home, '\d+', 'match');
-ScanNumber = ['Final_' out{2}];
+ScanNumber = [out{1}];
 imgPath = sprintf('%s/%s_Registration',home,ScanNumber);
 cd(imgPath);
 
@@ -124,7 +131,7 @@ Mn = zeros(2,size(M1,4));
 
 %% Create mask or segment
 % Set mask size
-maskSize = 150;
+maskSize = 50;
 
 unix(sprintf('sct_create_mask -i %s_MT_Reg.nii.gz -p center -size %0.0f -f cylinder -o %s_mask_%0.0f.nii.gz'...
     ,ScanNumber,maskSize,ScanNumber,maskSize));
@@ -186,7 +193,7 @@ unix(input_trans);
 R1obs = niftiread(out_volR1);
 
 %% MT Processing
-for s = 1:size(M1,3)
+for s = 7%1:size(M1,3)
     
     [row, col] = find(mask(:,:,s));
     
@@ -204,9 +211,9 @@ for s = 1:size(M1,3)
         Mn(1,:) = Mn1;
         Mn(2,:) = Mn2;
         
-        p.B1toMT = squeeze(B1toMT(row(ii), col(ii), s));
-%         p.B1toT1 = squeeze(B1toMFA(row(ii), col(ii), s));
-        p.Ernst2MFA = squeeze(R1obs(row(ii), col(ii),s,:))';
+        p.B1 = squeeze(B1toMT(row(ii), col(ii), s));
+%        p.B1toT1 = squeeze(B1toMFA(row(ii), col(ii), s));
+        p.Ernst = squeeze(R1obs(row(ii), col(ii),s,:))';
         p.B0 = squeeze(B0(row(ii), col(ii), s));
         p.M = Mn;
         [PSR(row(ii), col(ii), s),kba(row(ii), col(ii), s),T2a(row(ii),col(ii), s)...
@@ -219,6 +226,32 @@ for s = 1:size(M1,3)
      kab = PSR .* kba;
     save('qMT_results_full');
 end
+
+%% Calculate MTR and save as nii
+
+    %% Isolate S0 (100 kHz offset), and S_MT (2.5 and 3 kHz offsets)
+    % For both powers
+    
+    S0_low = M1(:,:,:,end);
+    SMT_2_low = M1(:,:,:,4);
+    SMT_3_low = M1(:,:,:,5);
+    
+    S0_high = M2(:,:,:,end);
+    SMT_2_high = M2(:,:,:,4);
+    SMT_3_high = M2(:,:,:,5);
+    
+    % Calulate MTR using both offsets and both powers
+    MTR_2_low = (S0_low - SMT_2_low) ./ S0_low;
+    MTR_2_high= (S0_high - SMT_2_high) ./ S0_high;
+    
+    MTR_3_low = (S0_low - SMT_3_low) ./ S0_low;
+    MTR_3_high= (S0_high - SMT_3_high) ./ S0_high;
+    
+    
+    
+    % Save variables
+    
+    save(sprintf('%s_MTR',ScanNumber))
 
 
 
@@ -241,12 +274,18 @@ MTr = sprintf('%s_Prereg/%s_MT_vol_1_resample.nii.gz',ScanNumber,ScanNumber);
 MTGr = sprintf('%s_Prereg/%s_MT_Gvol_1_resample.nii.gz',ScanNumber,ScanNumber);
 PSRr = sprintf('%s_Prereg/%s_PSR2MT_resample.nii.gz',ScanNumber,ScanNumber);
 R1r = sprintf('%s_Prereg/%s_R12MT_resample.nii.gz',ScanNumber,ScanNumber);
+MTRr = sprintf('%s_Prereg/%s_MTR2MT_resample.nii.gz',ScanNumber,ScanNumber);
+
 
 RefInfo = niftiinfo(Refvol);
 
 PSRnii = niftiinfo(MTvol);
 niftiwrite(PSR,sprintf('%s_PSR2MT.nii',ScanNumber),PSRnii);
 unix(sprintf('gzip %s_PSR2MT.nii',ScanNumber));
+
+MTRnii = niftiinfo(MTvol);
+niftiwrite(MTR_2_low,sprintf('%s_MTR2MT.nii',ScanNumber),MTRnii);
+unix(sprintf('gzip %s_MTR2MT.nii',ScanNumber));
 
 % cd(home)
 temp_folder = 'ANTs_Reg';
@@ -266,6 +305,9 @@ unix(['sct_resample -i ' ScanNumber '_PSR2MT.nii.gz -vox ' num2str(RefInfo.Image
 unix(['sct_resample -i ' T1vol ' -vox ' num2str(RefInfo.ImageSize(1)) ...
     'x' num2str(RefInfo.ImageSize(2)) 'x' num2str(RefInfo.ImageSize(3)) ...
     ' -x nn -o ' R1r ]);
+unix(['sct_resample -i ' ScanNumber '_MTR2MT.nii.gz -vox ' num2str(RefInfo.ImageSize(1)) ...
+    'x' num2str(RefInfo.ImageSize(2)) 'x' num2str(RefInfo.ImageSize(3)) ...
+    ' -x nn -o ' MTRr ]);
 
 volume =1;
 
@@ -283,7 +325,8 @@ unix(sprintf('fslsplit %s %s/PSRslice_ -z',...
     PSRr,temp_folder));
 unix(sprintf('fslsplit %s %s/R1slice_ -z',...
     R1r,temp_folder));
-
+unix(sprintf('fslsplit %s %s/MTRslice_ -z',...
+    MTRr,temp_folder));
 
 % Break Image into individual slices
 unix(sprintf('fslsplit %s %s/im_vol%i_ -z',...
@@ -304,6 +347,8 @@ for ii=1:num_slices
         Im = sprintf('%s/im_vol%i_000%i.nii.gz',temp_folder,volume,ii-1);
         ImPSR = sprintf('%s/PSRslice_000%i.nii.gz',temp_folder,ii-1);
         ImR1 = sprintf('%s/R1slice_000%i.nii.gz',temp_folder,ii-1);
+        ImMTR = sprintf('%s/MTRslice_000%i.nii.gz',temp_folder,ii-1);
+        
     else
         ref_gauss = sprintf('%s/ref_00%i.nii.gz',temp_folder,ii-1);
         ref = sprintf('%s/ref_00%i.nii.gz',temp_folder,ii-1);
@@ -311,6 +356,7 @@ for ii=1:num_slices
         Im = sprintf('%s/im_vol%i_00%i.nii.gz',temp_folder,volume,ii-1);
         ImPSR = sprintf('%s/PSRslice_00%i.nii.gz',temp_folder,ii-1);
         ImR1 = sprintf('%s/R1slice_00%i.nii.gz',temp_folder,ii-1);
+        ImMTR = sprintf('%s/MTRslice_00%i.nii.gz',temp_folder,ii-1);   
     end
     
     if ii < 10
@@ -379,6 +425,16 @@ for ii=1:num_slices
     inputApplyT=['antsApplyTransforms --dimensionality 2 -i ' ImR1 ' -o ' output_final_path ' -r ' ...
         ref ' -t ' output_nonrigid '1Warp.nii.gz ' output_nonrigid '0GenericAffine.mat -n Linear'];
     unix(inputApplyT);
+    
+    %Apply to MTR
+    if ii < 10
+        output_final_path= sprintf('%s/MTRs0%itoref_final.nii.gz',temp_folder,ii);
+    else
+        output_final_path= sprintf('%s/MTRs%itoref_final.nii.gz',temp_folder,ii);
+    end
+    inputApplyT=['antsApplyTransforms --dimensionality 2 -i ' ImMTR ' -o ' output_final_path ' -r ' ...
+        ref ' -t ' output_nonrigid '1Warp.nii.gz ' output_nonrigid '0GenericAffine.mat -n Linear'];
+    unix(inputApplyT);
 end
 
 unix(sprintf('fslmerge -z %s_PSR2ref.nii.gz %s/PSRs*toref_final.nii.gz',...
@@ -386,6 +442,8 @@ unix(sprintf('fslmerge -z %s_PSR2ref.nii.gz %s/PSRs*toref_final.nii.gz',...
 unix(sprintf('fslmerge -z %s_R1obs2ref.nii.gz %s/R1s*toref_final.nii.gz',...
     ScanNumber,temp_folder));
 unix(sprintf('fslmerge -z %s_MT2ref.nii.gz %s/ims*toref_final.nii.gz',...
+    ScanNumber,temp_folder));
+unix(sprintf('fslmerge -z %s_MTR2ref.nii.gz %s/MTRs*toref_final.nii.gz',...
     ScanNumber,temp_folder));
 
 unix(sprintf('rm -r %s',temp_folder)); 

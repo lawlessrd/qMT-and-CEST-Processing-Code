@@ -1,11 +1,15 @@
 
 function [APTasym, MTRrex] = CEST_postproc_02102020(CEST,WASSR,actual_resp,cest_new,ScanNumber);
 
-maskDir = dir(sprintf('%s_mask_*.nii.gz',ScanNumber));
+maskSize = 150;
 
-mask = niftiread(maskDir(1).name);
+unix(sprintf('sct_create_mask -i %s_MT_Reg.nii.gz -p center -size %0.0f -f cylinder -o %s_mask_%0.0f.nii.gz'...
+    ,ScanNumber,maskSize,ScanNumber,maskSize));
 
-maskCEST = logical(mask(:,:,7));
+mask = niftiread(sprintf('%s_mask_%0.0f.nii.gz',ScanNumber,maskSize));
+
+
+maskCEST = ones(size(CEST(:,:,:,1));%logical(mask(:,:,7));
 
 cd(cest_new);
 A_uncorr=double(CEST);

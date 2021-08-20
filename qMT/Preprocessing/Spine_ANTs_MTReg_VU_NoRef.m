@@ -102,77 +102,16 @@ fprintf('\nTime to Perform Registration Prep is: %3.4f minutes \n', toc(PrepTime
 
 AntsTime = tic;
 
-Reg_ANTs_vu_NoRef(ScanNumber,'MT');
-Reg_ANTs_vu_NoRef(ScanNumber,'B0');
-Reg_ANTs_vu_NoRef(ScanNumber,'B1');
-Reg_ANTs_vu_NoRef(ScanNumber,'MFA');
+Reg_ANTs_vu_NoRef_All(ScanNumber,'MT');
+Reg_ANTs_vu_NoRef_All(ScanNumber,'B0');
+Reg_ANTs_vu_NoRef_All(ScanNumber,'B1');
+Reg_ANTs_vu_NoRef_All(ScanNumber,'MFA');
 
 fprintf('\nTime to Perform Registration is: %3.4f minutes \n', toc(AntsTime)/60);
 
 %% Load Volumes and Perform Final Crop
 
-% % Check if scanID is a character
-% if ~ischar(ScanNumber)
-%     ScanNumber = num2str(ScanNumber);
-% end
-% 
-% unix(sprintf('gunzip %s_Registration/%s*.gz',ScanNumber,ScanNumber));
-% 
-% tmp = load_nii(sprintf('%s_Registration/%s_MT_Reg.nii',ScanNumber,ScanNumber));
-% qMT_Reg = tmp.img;
-% % qMTi.info = loadPARREC(sprintf('%s/%s',ImagePath,MT));
-% 
-% tmp = load_nii(sprintf('%s_Registration/%s_MFA_Reg_to_MFA.nii',ScanNumber,ScanNumber));
-% T1_Reg = tmp.img;
-% % T1i.info = loadPARREC(sprintf('%s/%s',ImagePath,MFA));
-% 
-% tmp = load_nii(sprintf('%s_Registration/%s_B1_Reg.nii',ScanNumber,ScanNumber));
-% B1_Reg = tmp.img;
-% % B1i.info = loadPARREC(sprintf('%s/%s',ImagePath,B1));
-% 
-% tmp = load_nii(sprintf('%s_Registration/%s_B0_Reg.nii',ScanNumber,ScanNumber));
-% B0_Reg = tmp.img;
-% % B0i.info = loadPARREC(sprintf('%s/%s',ImagePath,B0));
-% 
-% tmp = load_nii(sprintf('%s_Registration/%s_Reference.nii',ScanNumber,ScanNumber));
-% Ref_Reg = tmp.img;
-% % Refi.info = loadPARREC(sprintf('%s/%s',ImagePath,Ref));
-% 
-% unix(sprintf('gzip %s_Registration/%s*.nii',ScanNumber,ScanNumber));
-% 
-% [rmax,~,zmax] = size(Ref_Reg);
-% 
-% rhalf = round(rmax/2);
-% 
-% Crop = floor(rmax*.35);
-% 
-% Ref_Reg_crop = zeros(2*Crop,2*Crop,zmax);
-% B1_Reg_crop = zeros(2*Crop,2*Crop,zmax);
-% B0_Reg_crop = zeros(2*Crop,2*Crop,zmax);
-% 
-% qMT_ndyn = size(qMT_Reg,4);
-% MFA_ndyn = size(T1_Reg,4);
-% 
-% qMT_Reg_crop = zeros(2*Crop,2*Crop,zmax,qMT_ndyn);
-% T1_Reg_crop = zeros(2*Crop,2*Crop,zmax,MFA_ndyn);
-% 
-% for kk = 1:zmax
-%     Ref_Reg_crop(:,:,kk)=imcrop(Ref_Reg(:,:,kk),[rhalf-Crop rhalf-Crop 2*Crop-1 2*Crop-1]);
-%     B1_Reg_crop(:,:,kk)=imcrop(B1_Reg(:,:,kk),[rhalf-Crop rhalf-Crop 2*Crop-1 2*Crop-1]);
-%     B0_Reg_crop(:,:,kk)=imcrop(B0_Reg(:,:,kk),[rhalf-Crop rhalf-Crop 2*Crop-1 2*Crop-1]);
-%     
-%     for tt1 = 1:qMT_ndyn
-%         qMT_Reg_crop(:,:,kk,tt1)=imcrop(qMT_Reg(:,:,kk,tt1),[rhalf-Crop rhalf-Crop 2*Crop-1 2*Crop-1]); 
-%     end
-%     for tt2 = 1:MFA_ndyn
-%         T1_Reg_crop(:,:,kk,tt2)=imcrop(T1_Reg(:,:,kk,tt2),[rhalf-Crop rhalf-Crop 2*Crop-1 2*Crop-1]);
-%     end
-% end
-% 
-% clear kk tt1 tt2 tmp rhalf ans
-% 
-% 
-% save(sprintf('MT_CoReg_%s',ScanNumber));
+
 
 fprintf('\n--------------------------------------- \n');
 fprintf('   Finished Registration of %s. \n',ScanNumber);

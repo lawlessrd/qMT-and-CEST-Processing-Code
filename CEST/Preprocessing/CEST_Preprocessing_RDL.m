@@ -4,14 +4,12 @@
 
 setenv('FSLOUTPUTTYPE','NIFTI_GZ')
 Path = getenv('PATH');
-if ~contains(Path,'Users/lawlesrd/Documents/fsl/bin')
-    setenv('PATH', [Path ':/Users/lawlesrd/Documents/fsl/bin']);  %Edit rdl 4/19/2018 getenv was just PATH
-     % setenv('PATH', [Path ':/usr/local/fsl/bin']);  %home version
+if ~contains(Path,'/usr/local/fsl/bin')
+    setenv('PATH', [Path ':/usr/local/fsl/bin']);
 end
 
-if ~contains(Path,'/Users/lawlesrd/install/bin/')
-    setenv('PATH', [Path ':/Users/lawlesrd/install/bin/']);  %Edit rdl 4/19/2018 getenv was just PATH
-      %setenv('PATH', [Path ':/opt/ants/bin/']);  %home version
+if ~contains(Path,'/opt/ants/bin/')
+    setenv('PATH', [Path ':/opt/ants/bin/']);
 end
 clear PATH
 
@@ -19,7 +17,7 @@ clear PATH
 home = pwd;
 
 out = regexp(home, '\d+', 'match');
-ScanNumber = ['Smith_' out{1}];
+ScanNumber = [out{1}];
 
 a=dir('*WIP_mFFE_0.65*.nii');
 b=dir('*150ms_5NSA*.nii');
@@ -30,7 +28,7 @@ f=dir('*B1*Map*_e2.nii');
 
 B1anat = e.name;
 B1mag = f.name;
-B1fix( ScanName,B1anat,B1mag )
+B1fix( ScanNumber,B1anat,B1mag )
 
 g=dir('Smith*B1fix*.nii');
 

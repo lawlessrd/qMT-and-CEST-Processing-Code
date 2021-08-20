@@ -2,6 +2,7 @@
 
 %% Set paths
 
+% FSL
 setenv('FSLOUTPUTTYPE','NIFTI_GZ')
 Path = getenv('PATH');
 if ~contains(Path,'Users/lawlesrd/Documents/fsl/bin')
@@ -9,18 +10,27 @@ if ~contains(Path,'Users/lawlesrd/Documents/fsl/bin')
      % setenv('PATH', [Path ':/usr/local/fsl/bin']);  %home version
 end
 
-% if ~contains(Path,'/Users/lawlesrd/install/bin/')
-%     setenv('PATH', [Path ':/Users/lawlesrd/install/bin/']);  %Edit rdl 4/19/2018 getenv was just PATH
-%       %setenv('PATH', [Path ':/opt/ants/bin/']);  %home version
-% end
+% ANTS
+if ~contains(Path,'/Users/lawlesrd/install/bin/')
+    setenv('PATH', [Path ':/Users/lawlesrd/install/bin/']);  %Edit rdl 4/19/2018 getenv was just PATH
+      %setenv('PATH', [Path ':/opt/ants/bin/']);  %home version
+end
 clear PATH
+
+% SCT
+if ~contains(Path,'/Users/dylanlawless/sct_5.3.0/bin')
+    setenv('PATH', [Path ':/Users/dylanlawless/sct_5.3.0/bin']);  %Edit rdl 4/19/2018 getenv was just PATH
+      %setenv('PATH', [Path ':/opt/ants/bin/']);  %home version
+end
+clear PATH
+
 
 %% Load in required files
 
 tic;
 home=pwd;
 out = regexp(home, '\d+', 'match');
-ScanNumber = ['Final_' out{1}];
+ScanNumber = [out{1}];
 
 % Get respiration data from scan phys logs
 [actual_resp] = getRespRVT_r55_3TA('n');
