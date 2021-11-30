@@ -35,7 +35,7 @@ ScanNumber = [out{1}];
 imgPath = sprintf('%s/%s_Registration',home,ScanNumber);
 cd(imgPath);
 
-% Lily: change file/folder names to match Ashwin's registration
+% Lily: change file names/f
 
 a=dir(sprintf('%s_MT_Reg.nii.gz',ScanNumber));
 b=dir(sprintf('%s_MFA_Reg_to_MFA.nii.gz',ScanNumber));
@@ -158,8 +158,7 @@ end
 
 
 %% Register R1map to MT
-% Lily: Might be able to remove this section, just set whatever your
-% registered T1 is to the variable R1obs
+% 
  MFAnii = niftiinfo(sprintf('%s_Prereg/%s_MFA_vol_1.nii.gz',ScanNumber,ScanNumber));
 % 
  niftiwrite(R1obsPrereg,'R1obs.nii');
@@ -213,28 +212,31 @@ end
 
 %% Calculate MTR and save as nii
 
-%% Isolate S0 (100 kHz offset), and S_MT (2.5 and 3 kHz offsets)
-% For both powers
+    %% Isolate S0 (100 kHz offset), and S_MT (2.5 and 3 kHz offsets)
+    % For both powers
+    
+    S0_low = M1(:,:,:,end);
+    SMT_2_low = M1(:,:,:,4);
+    SMT_3_low = M1(:,:,:,5);
+    
+    S0_high = M2(:,:,:,end);
+    SMT_2_high = M2(:,:,:,4);
+    SMT_3_high = M2(:,:,:,5);
+    
+    % Calulate MTR using both offsets and both powers
+    MTR_2_low = (S0_low - SMT_2_low) ./ S0_low;
+    MTR_2_high= (S0_high - SMT_2_high) ./ S0_high; % Ideal MTR for most projects
+    
+    MTR_3_low = (S0_low - SMT_3_low) ./ S0_low;
+    MTR_3_high= (S0_high - SMT_3_high) ./ S0_high;
+    
+    
+    
+    % Save variables
+    
+    save(sprintf('%s_MTR',ScanNumber))
 
-S0_low = M1(:,:,:,end);
-SMT_2_low = M1(:,:,:,4);
-SMT_3_low = M1(:,:,:,5);
 
-S0_high = M2(:,:,:,end);
-SMT_2_high = M2(:,:,:,4);
-SMT_3_high = M2(:,:,:,5);
-
-% Calulate MTR using both offsets and both powers
-MTR_2_low = (S0_low - SMT_2_low) ./ S0_low;
-MTR_2_high= (S0_high - SMT_2_high) ./ S0_high; % Ideal MTR for most projects
-
-MTR_3_low = (S0_low - SMT_3_low) ./ S0_low;
-MTR_3_high= (S0_high - SMT_3_high) ./ S0_high;
-
-
-% Save variables
-
-save(sprintf('%s_MTR',ScanNumber))
 
 %% Move T1obs and PSR to mFFE space
 % Steps:
@@ -243,8 +245,6 @@ save(sprintf('%s_MTR',ScanNumber))
 % 3. Apply transform
 
 %% Resample PSR, MT to 14 slices Save results
-
-%Lily: check slice # for T2, might not need this section if it matches qMT
 
 antsPath = '/Users/lawlesrd/install/bin/';
 
