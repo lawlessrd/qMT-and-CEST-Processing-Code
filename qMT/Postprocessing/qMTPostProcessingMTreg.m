@@ -24,7 +24,7 @@ if ~contains(Path,'/Users/dylanlawless/sct_5.3.0/bin')
 end
 clear PATH
 
-%% Test for differences in MFA when registered to MT vs itself
+%% Import scans
 
 tic;
 home=pwd;
@@ -193,7 +193,7 @@ unix(input_trans);
 R1obs = niftiread(out_volR1);
 
 %% MT Processing
-for s = 7%1:size(M1,3)
+for s = 1:size(M1,3)
     
     [row, col] = find(mask(:,:,s));
     
@@ -242,7 +242,7 @@ end
     
     % Calulate MTR using both offsets and both powers
     MTR_2_low = (S0_low - SMT_2_low) ./ S0_low;
-    MTR_2_high= (S0_high - SMT_2_high) ./ S0_high;
+    MTR_2_high= (S0_high - SMT_2_high) ./ S0_high; % Ideal MTR for most projects
     
     MTR_3_low = (S0_low - SMT_3_low) ./ S0_low;
     MTR_3_high= (S0_high - SMT_3_high) ./ S0_high;
