@@ -1,8 +1,39 @@
 %% qMT Post Processing 
 % RDL 
+
+%% Set paths
+
+% FSL
+setenv('FSLOUTPUTTYPE','NIFTI_GZ')
+Path = getenv('PATH');
+if ~contains(Path,'Users/lawlesrd/Documents/fsl/bin')
+    setenv('PATH', [Path ':/Users/lawlesrd/Documents/fsl/bin']);  %Edit rdl 4/19/2018 getenv was just PATH
+     % setenv('PATH', [Path ':/usr/local/fsl/bin']);  %home version
+end
+
+% ANTS
+if ~contains(Path,'/Users/lawlesrd/install/bin/')
+    setenv('PATH', [Path ':/Users/lawlesrd/install/bin/']);  %Edit rdl 4/19/2018 getenv was just PATH
+      %setenv('PATH', [Path ':/opt/ants/bin/']);  %home version
+end
+clear PATH
+
+% SCT
+if ~contains(Path,'/Users/dylanlawless/sct_5.3.0/bin')
+    setenv('PATH', [Path ':/Users/dylanlawless/sct_5.3.0/bin']);  %Edit rdl 4/19/2018 getenv was just PATH
+      %setenv('PATH', [Path ':/opt/ants/bin/']);  %home version
+end
+clear PATH
+
+
+antsPath = '/Users/lawlesrd/install/bin/';
+
+
 %% Load data
-home = pwd;
-ScanNumber = '3';
+tic;
+home=pwd;
+out = regexp(home, '\d+', 'match');
+ScanNumber = [out{1}];
 imgPath = sprintf('%s/%s_Registration',home,ScanNumber);
 cd(imgPath);
 
@@ -68,12 +99,6 @@ M1(isnan(M1)) = 0 ;
 
 % M2(isinf(M2)) = 0 ;
 % M2(isnan(M2)) = 0 ;
-%% UTSW
-% 
-% f=dir(sprintf('%s_MT_Reg_seg.nii.gz',ScanNumber));
-% Seg_file=f.name;
-% Seg = load_nii(Seg_file);
-% % Seg_img = permute(Seg.img, [2,3,1]);
 
 %% FITTING
 R1obs = zeros(size(B0));
@@ -89,22 +114,17 @@ res = 0;
 
 Mn = zeros(2,size(M1,4));
 
-%% Create mask
 %% Create mask or segment
-% mask = zeros(size(qMT(:,:,:,1)));
-% 
-% SegInd(:,:,:) = find(Seg.img == 3);
-% 
-% mask(SegInd) = 1;
+% Creates a simple cylindrical mask using Spinal Cord Toolbox
 
-% mask = zeros(150,150,11);
-% for i = 35%1:size(qMT,3)
-%     figure(1); imagesc(qMT(:,:,i,1)); axis off;
-%     title(sprintf('Label ROI for slice %i',i));
-%     mask(:,:,i) = roipoly;
-% end
-% 
-% close Figure 1
+% Set mask size
+maskSize = 50;
+
+unix(sprintf('sct_create_mask -i %s_MT_Reg.nii.gz -p center -size %0.0f -f cylinder -o %s_mask_%0.0f.nii.gz'...
+    ,ScanNumber,maskSize,ScanNumber,maskSize));
+
+mask = niftiread(sprintf('%s_mask_%0.0f.nii.gz',ScanNumber,maskSize));
+
 %%
 for s = 1:size(M1,3)
     

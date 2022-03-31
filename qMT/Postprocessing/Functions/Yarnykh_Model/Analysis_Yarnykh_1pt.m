@@ -78,8 +78,10 @@ TR = [TR*10^-3, TR*10^-3];
 
 %% 1 Parm Fit
 
-%    PSR - Initial Guess
-% p0 = [0.15  10  10e-3      10e-6];
+% Initial estimate
+%       PSR   kba   T2b    T2aR1a
+% p0 = [0.15  10   10e-6   10e-3];
+
 p0 = 0.15;
 p.kba = 10;
 p.T2b = 10e-6;
