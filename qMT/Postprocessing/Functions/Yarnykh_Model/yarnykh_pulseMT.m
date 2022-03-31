@@ -24,12 +24,8 @@ Wa = pi*gamma^2*ga*B1e.^2;
 % Wa = zeros(size(ga));
 
 % Bound Pool
-gb = absorptionLineShape(T2(2),deltaMT,lineshape); %changed RDL (added 1000)
+gb = absorptionLineShape(T2(2),deltaMT,lineshape); 
 Wb = pi*gamma^2*gb*B1e.^2;
-
-% gb = absorptionLineShape(T2(2),deltaMT,lineshape);
-% Wb = pi*gamma^2*gb*B1e.^2;
-
 
 % Loop for each RF power and offset
 for ii = 1:length(deltaMT)
@@ -63,11 +59,6 @@ for ii = 1:length(deltaMT)
         Es=expm(RL*ts); 
         Er = expm(RL*tr);
         Em=expm((RL+W)*tm(jj));
-        
-%         %Speed up code test RDL        
-%         Es=expm_(RL*ts); 
-%         Er = expm_(RL*tr);
-%         Em=expm_((RL+W)*tm(jj));
 
         Mz(:,ii,jj) = (eye(2)-Es*Em*Er*C)\((Es*Em*(eye(2)-Er)+eye(2)-Es)...
             *M0+Es*(eye(2)-Em)*Mss);

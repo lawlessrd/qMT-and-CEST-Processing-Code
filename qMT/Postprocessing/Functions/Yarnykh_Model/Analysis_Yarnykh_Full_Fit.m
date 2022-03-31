@@ -41,22 +41,24 @@ end
 %% MFA - R1obs - (Ke's Code)
 corrB1 = double(p.B1/100);
 
+% Removed T1 calculation (completed in previous script)
+% Need to double check that R1 is in seconds
 
-T1flip = double(p.T1flip);
-MFA = double(p.MFA);
-MFA_Data = double(p.Ernst);
-T1TR = double(p.T1TR);
-
-del_flip = T1flip/MFA;
-thetaT1 = T1flip:-del_flip:del_flip; % deg
-yval = MFA_Data./sind(thetaT1*corrB1);
-xval = MFA_Data./tand(thetaT1*corrB1);
-pfit = polyfit(xval,yval,1);
-
-E1 = pfit(1);
-
-T1obs = -T1TR/log(E1);
-R1obs = 1/T1obs*1000; % s
+% T1flip = double(p.T1flip);
+% MFA = double(p.MFA);
+% MFA_Data = double(p.Ernst);
+% T1TR = double(p.T1TR);
+% 
+% del_flip = T1flip/MFA;
+% thetaT1 = T1flip:-del_flip:del_flip; % deg
+% yval = MFA_Data./sind(thetaT1*corrB1);
+% xval = MFA_Data./tand(thetaT1*corrB1);
+% pfit = polyfit(xval,yval,1);
+% 
+% E1 = pfit(1);
+% 
+% T1obs = -T1TR/log(E1);
+R1obs = p.Ernst; %1/T1obs*1000; % s
 % R1obs = 1; % s
 
 if R1obs < 0 || isnan(R1obs)
@@ -83,7 +85,7 @@ TR = double(p.TR);
 
 gamma = 42.58*2*pi; % Larmor - rad/s-uT
 
-
+% calculate exact MT B1 power and FA based on Philips pulse
 [B1MT,tMT] = philipsRFpulse_FA(MT_flip,pwMT,'am_sg_100_100_0');
 B1eMT = CWEqMTPulse(B1MT*corrB1,tMT,pwMT);
 thetaEX = ([qMTflip qMTflip]*pi/180)*corrB1;
@@ -94,13 +96,12 @@ TR = [TR*10^-3, TR*10^-3];
 
 %% 4 Parm Fit
 
-%    PSR   kba    T2a      T2b - Initial Guesses
-% p0 = [0.15  10  10e-3      10e-6];
-p0 = [0.15  10  10e-3      10e-6]; %RDL
+%     PSR   kba  T2a     T2b - Initial Guesses
+p0 = [0.15  10  10e-3   10e-6]; %RDL
 [x,chi2,chi2p,res,resn] = fit_SSPulseMT_yarnykh_Full_Fit(p0,M,pwMT,ts,TR,R1obs,thetaEX,B1eMT,deltaMT+corrB0,lineshape);
 
-PSR = x(1);
-kba = x(2);
-T2a = x(3);
-T2b = x(4);
+PSR = x(1); % Pool size ratio
+kba = x(2); % exchange rate
+T2a = x(3); % T2 of water pool
+T2b = x(4); % T2 of MT pool
 

@@ -24,6 +24,9 @@ if ~contains(Path,'/Users/dylanlawless/sct_5.3.0/bin')
 end
 clear PATH
 
+
+antsPath = '/Users/lawlesrd/install/bin/';
+
 %% Import scans
 
 tic;
@@ -97,6 +100,7 @@ p.T1TR = 50; % T1 TR (ms)
 % p.T1TR = 20; % T1 TR (ms)
 
 %% Normalization
+% Split qMT images by power and normalize to 100 kHz offset
 
 M1 = qMT(:,:,:,1:8);
 M2 = qMT(:,:,:,9:end);
@@ -130,6 +134,8 @@ res = 0;
 Mn = zeros(2,size(M1,4));
 
 %% Create mask or segment
+% Creates a simple cylindrical mask using Spinal Cord Toolbox
+
 % Set mask size
 maskSize = 50;
 
@@ -159,7 +165,6 @@ for s = 1:size(M1,3)
         
         
         corrB1toMFA = double(p.B1toT1/100);
-        corrB1toMT = double(p.B1toMT/100);
         
         T1flip = double(p.T1flip);
         MFA = double(p.MFA);
@@ -174,7 +179,7 @@ for s = 1:size(M1,3)
 end
 
 
-%% Register R1map to MT
+%% Register R1map to MT using FLIRT
 % 
  MFAnii = niftiinfo(sprintf('%s_Prereg/%s_MFA_vol_1.nii.gz',ScanNumber,ScanNumber));
 % 
@@ -229,22 +234,22 @@ end
 
 %% Calculate MTR and save as nii
 
-    %% Isolate S0 (100 kHz offset), and S_MT (2.5 and 3 kHz offsets)
+    %% Isolate S0 (100 kHz offset), and S_MT (2 and 2.5 kHz offsets)
     % For both powers
     
     S0_low = M1(:,:,:,end);
-    SMT_2_low = M1(:,:,:,4);
-    SMT_3_low = M1(:,:,:,5);
+    SMT_2_low = M1(:,:,:,3);
+    SMT_3_low = M1(:,:,:,4);
     
     S0_high = M2(:,:,:,end);
-    SMT_2_high = M2(:,:,:,4);
-    SMT_3_high = M2(:,:,:,5);
+    SMT_2_high = M2(:,:,:,3);
+    SMT_3_high = M2(:,:,:,4);
     
     % Calulate MTR using both offsets and both powers
     MTR_2_low = (S0_low - SMT_2_low) ./ S0_low;
-    MTR_2_high= (S0_high - SMT_2_high) ./ S0_high; % Ideal MTR for most projects
+    MTR_2_high= (S0_high - SMT_2_high) ./ S0_high;
     
-    MTR_3_low = (S0_low - SMT_3_low) ./ S0_low;
+    MTR_3_low = (S0_low - SMT_3_low) ./ S0_low; % best for SC MTR calculations
     MTR_3_high= (S0_high - SMT_3_high) ./ S0_high;
     
     
@@ -262,8 +267,6 @@ end
 % 3. Apply transform
 
 %% Resample PSR, MT to 14 slices Save results
-
-antsPath = '/Users/lawlesrd/install/bin/';
 
 MTGvol = sprintf('%s_Prereg/%s_MT_Gvol_1.nii.gz',ScanNumber,ScanNumber);
 MTvol = sprintf('%s_Prereg/%s_MT_vol_1.nii.gz',ScanNumber,ScanNumber);
@@ -284,7 +287,7 @@ niftiwrite(PSR,sprintf('%s_PSR2MT.nii',ScanNumber),PSRnii);
 unix(sprintf('gzip %s_PSR2MT.nii',ScanNumber));
 
 MTRnii = niftiinfo(MTvol);
-niftiwrite(MTR_2_low,sprintf('%s_MTR2MT.nii',ScanNumber),MTRnii);
+niftiwrite(MTR_3_low,sprintf('%s_MTR2MT.nii',ScanNumber),MTRnii);
 unix(sprintf('gzip %s_MTR2MT.nii',ScanNumber));
 
 % cd(home)
