@@ -41,7 +41,7 @@ a=dir(sprintf('%s_MT_Reg_SP.nii.gz',ScanNumber));
 b=dir(sprintf('%s_MFA_Reg.nii.gz',ScanNumber));
 c=dir(sprintf('%s_B0_Reg.nii.gz',ScanNumber));
 d=dir(sprintf('%s_B1_Reg.nii.gz',ScanNumber));
-e=dir(sprintf('%s_Reference.nii.gz',ScanNumber));
+e=dir(sprintf('%s_Reference.nii.gz',ScanNumber)); %mFFE
 MT_file=a.name;
 MFA_file=b.name;
 B0_file=c.name;
@@ -144,9 +144,9 @@ for s = 1:size(M1,3)
         Mn(1,:) = Mn1;
 %         Mn(2,:) = Mn2;
         
-        p.B1 = squeeze(B1(row(ii), col(ii), 23));
-        p.Ernst = squeeze(T1mfa(row(ii), col(ii),23,:))';
-        p.B0 = squeeze(B0(row(ii), col(ii), 23));
+        p.B1 = squeeze(B1(row(ii), col(ii), s));
+        p.Ernst = squeeze(T1mfa(row(ii), col(ii),s,:))';
+        p.B0 = squeeze(B0(row(ii), col(ii), s));
         p.M = Mn;
         [PSR(row(ii), col(ii), s),R1obs(row(ii), col(ii), s),chi2(row(ii), col(ii), s),chi2p(row(ii), col(ii), s),res,resn(row(ii), col(ii), s)] = Analysis_Yarnykh_1pt(p);
 %         fprintf('PSR=%g, kba=%g, T2a=%g, T2b=%g, T1obs=%g, T1a=%g, chi2=%g, chi2p=%g, resn=%g, sigma=%g \n',PSR(row(ii), col(ii), s),kba(row(ii), col(ii), s),T2a(row(ii), col(ii), s),T2b(row(ii), col(ii), s),T1obs(row(ii), col(ii), s),T1a(row(ii), col(ii), s),chi2(row(ii), col(ii), s),chi2p(row(ii), col(ii), s),resn(row(ii), col(ii), s),sigma(row(ii), col(ii), s));

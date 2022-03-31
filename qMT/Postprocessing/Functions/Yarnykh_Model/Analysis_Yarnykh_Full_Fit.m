@@ -11,7 +11,7 @@ function [PSR,kba,T2a,T2b,R1obs,chi2,chi2p,res,resn] = Analysis_Yarnykh_Full_Fit
 %       p.B0 - B0 correction data
 %       p.MFA - Number of dynamics in the MFA image
 %       p.T1flip - FA's from the Examcard in degrees (calculates rest of FA in code)
-%       p.Ernst - T1 Data (in order from largest FA to smallest FA)
+%       p.Ernst - R1obs values (ms)
 %       p.T1TR - TR from T1 data (in ms)
 %       p.pwMT - pulse length of MT pulse (in s)
 %       p.MT_flip - Flip angle of MT saturation pulse (in degrees)

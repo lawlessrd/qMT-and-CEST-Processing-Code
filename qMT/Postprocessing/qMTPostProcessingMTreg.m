@@ -36,12 +36,13 @@ ScanNumber = [out{1}];
 imgPath = sprintf('%s/%s_Registration',home,ScanNumber);
 cd(imgPath);
 
+% Note: Make sure we are using magnitude B1
 
 a=dir(sprintf('%s_MT_Reg.nii.gz',ScanNumber));
 b=dir(sprintf('%s_MFA_Reg_to_MFA.nii.gz',ScanNumber));
 c=dir(sprintf('%s_B0_Reg.nii.gz',ScanNumber));
 d=dir(sprintf('%s_B1_Reg_to_MT.nii.gz',ScanNumber));
-e=dir(sprintf('%s_Reference.nii.gz',ScanNumber));
+e=dir(sprintf('%s_Reference.nii.gz',ScanNumber)); % mFFE
 
 g=dir(sprintf('%s_B1_Reg_to_MFA.nii.gz',ScanNumber));
 
@@ -136,6 +137,8 @@ Mn = zeros(2,size(M1,4));
 %% Create mask or segment
 % Creates a simple cylindrical mask using Spinal Cord Toolbox
 
+% Note: might be best to process entire image
+
 % Set mask size
 maskSize = 50;
 
@@ -145,6 +148,7 @@ unix(sprintf('sct_create_mask -i %s_MT_Reg.nii.gz -p center -size %0.0f -f cylin
 mask = niftiread(sprintf('%s_mask_%0.0f.nii.gz',ScanNumber,maskSize));
 
 %% Calculate T1 maps
+% Requirements: MFA registered to first FA, B1 registered to first FA of MFA
 
 for s = 1:size(M1,3)
     
@@ -282,10 +286,12 @@ MTRr = sprintf('%s_Prereg/%s_MTR2MT_resample.nii.gz',ScanNumber,ScanNumber);
 
 RefInfo = niftiinfo(Refvol);
 
+% save PSR to nii
 PSRnii = niftiinfo(MTvol);
 niftiwrite(PSR,sprintf('%s_PSR2MT.nii',ScanNumber),PSRnii);
 unix(sprintf('gzip %s_PSR2MT.nii',ScanNumber));
 
+% save MTR to nii
 MTRnii = niftiinfo(MTvol);
 niftiwrite(MTR_3_low,sprintf('%s_MTR2MT.nii',ScanNumber),MTRnii);
 unix(sprintf('gzip %s_MTR2MT.nii',ScanNumber));
